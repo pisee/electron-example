@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Voltron</title>
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.css">
+    <style>
+      .list-group-item{
+        cursor: pointer;
+      }
+      .list-group-item:hover{
+        background-color: #eee;
+      }
+      .thumbnail {
+        width: 60px;
+        height: 60px;
+        border-radius: 30px;
+        margin-right: 16px;
+      }
+    </style>
+
+    
+    <script>
+      // let $ = require('jquery');
+      // require('popper.js');
+      // require('bootstrap');
+    </script>
+  </head>
+  <body>
+    <!-- <div>
+      <ul class="nav nav-tabs">
+        <li class="nav-item">
+          <a class="nav-link active" href="#">분석 실행</a>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">분석 결과 조회</a>
+          <div class="dropdown-menu">
+            <a class="dropdown-item" href="#">View</a>
+            <a class="dropdown-item" href="#">Service</a>
+            <a class="dropdown-item" href="#">DateBase</a>
+            <a class="dropdown-item" href="#">CRUD Matrics</a>
+          </div>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">X-ray</a>
+        </li>
+      </ul>
+    </div> -->
+    <ul id='posts' class="list-group list-group-flush">
+    </ul>
+
+    <script>
+      const axios = require('axios')
+      const {remote, ipcRenderer} = require('electron')
+      const {BrowserWindow, Menu} = remote
+
+      this.initMenu();
+
+      let posts = []
+      axios.get('http://localhost:3000/posts')
+      // axios.get('https://reddit.com/r/aww.json')
+        .then(response => {
+          posts = response.data.data.children;
+          this.renderPosts(posts)
+        })
+        .catch(error => {
+          console.log(error);
+        })
+
+        function renderPosts(posts) {
+          posts.forEach(element => {
+            document.getElementById('posts').innerHTML = document.getElementById('posts').innerHTML + 
+              `<li class="list-group-item d-flex align-items-center" data-image="${element.data.preview.images[0].source.url}">
+                <img src="${element.data.thumbnail}" alt="thumb" class="thumbnail">
+                <div>${element.data.title}</div>
+              </li>`
+          })
+
+          this.addEventListeners();
+        }
+
+        function addEventListeners(){
+          document.querySelectorAll('.list-group-item').forEach(element =>{
+            element.addEventListener('click', function(){
+              let imageWindow = new BrowserWindow({
+                width: 500,
+                height: 500,
+              })
+
+              imageWindow.on('close', () => {
+                imageWindow = null
+              })
+
+              imageUrl = this.getAttribute('data-image')
+              encImageUrl = encodeURIComponent(imageUrl)
+              imageWindow.loadURL('file://'+ __dirname + '/image.html?image=' + encImageUrl)
+              imageWindow.show()
+
+            })
+          })
+        }
+
+        function initMenu(){
+          const menu = Menu.buildFromTemplate([
+            {
+              label: 'File',
+              submenu: [
+                {label: 'New Window'},
+                {
+                  label: 'Settings',
+                  accelerator: 'CmdOrCtrl+,',
+                  click: () => {
+                    ipcRenderer.send('toggle-settings')
+                  }
+                },
+                {type: 'separator'},
+                {
+                  label: 'Quit',
+                  accelerator: 'CmdOrCtrl+Q'
+                },
+              ]
+            },
+            {
+              label: 'Edit',
+              submenu: [
+                {label: 'Menu Item1'},
+                {label: 'Menu Item2'},
+                {label: 'Menu Item3'},
+              ]
+            }
+          ])
+
+          Menu.setApplicationMenu(menu)
+        }
+    </script>
+  </body>
+</html>
